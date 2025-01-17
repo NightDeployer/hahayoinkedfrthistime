@@ -67,6 +67,8 @@
                 <div class="slot" id="slot-3">3<br>sword</div>
                 <div class="slot" id="slot-4">4</div>
                 <div class="slot" id="slot-5">5</div>
+                <div class="slot" id="slot-6"><br>trap</div>
+
             </div>
             <div id="wall"></div>
             <div id="hover">
@@ -168,6 +170,8 @@
             slots[2].style.left = window.innerWidth / 2 - 45 + "px";
             slots[3].style.left = window.innerWidth / 2 + 25 + "px";
             slots[4].style.left = window.innerWidth / 2 + 95 + "px";
+            slots[5].style.left = window.innerWidth / 2 + 165 + 'px'; // Adjust position for the new slot
+
             healthBarBack.style.left = window.innerWidth / 2 - 125 + "px";
             let wall = document.getElementById("wall");
             function updateSlotColors() {
@@ -210,23 +214,31 @@
                 playerUsername.style.textAlign = "center";
                 playerUsername.style.fontWeight = "bold";
                 document.body.appendChild(playerUsername);
-                onChildAdded(blockRef, (snapshot) => {
-                    const block = snapshot.val();
-                    let newBlock = document.createElement("div");
-                    newBlock.style.height = "50px";
-                    newBlock.style.width = "50px";
-                    newBlock.id = "block";
-                    newBlock.style.backgroundColor = block.color;
-                    newBlock.style.position = "absolute";
-                    newBlock.style.zIndex = -1000;
-                    newBlock.x = block.x;
-                    newBlock.y = block.y;
-                    newBlock.classList.add("block");
-                    newBlock.style.left = worldX + block.x + "px";
-                    newBlock.style.top = worldY + block.y + "px";
-                    document.body.appendChild(newBlock);
-                    blocks.push(newBlock);
-                });
+                onChildAdded(blockRef, snapshot => {
+  const blockData = snapshot.val(); // Get the block data from the database
+  let newBlock = document.createElement("div"); // Create a new block element
+  newBlock.style.height = '50px';
+  newBlock.style.width = '50px';
+  newBlock.id = "block";
+  newBlock.style.backgroundColor = blockData.color; // Set the block color
+  newBlock.style.position = "absolute";
+  newBlock.style.zIndex = -1000;
+  newBlock.x = blockData.x; // Assign the block's X position
+  newBlock.y = blockData.y; // Assign the block's Y position
+  newBlock.classList.add("block"); // Add a CSS class for styling
+  newBlock.style.left = worldX + blockData.x + 'px'; // Position block on the screen
+  newBlock.style.top = worldY + blockData.y + 'px';
+
+  // Check if this block is a trap
+  if (blockData.kind === "trap") {
+    newBlock.dataset.kind = "trap"; // Mark block as a trap
+    newBlock.style.backgroundColor = "red"; // Set the trap color
+  }
+
+  document.body.appendChild(newBlock); // Add the block to the DOM
+  blocks.push(newBlock); // Add the block to the blocks array for collision detection
+});
+
                 inGame = true;
             });
             document.addEventListener("keydown", (event) => {
@@ -289,6 +301,41 @@
             player.style.top = pos.y + "px";
             function gameLoop() {
                 if (player) {
+                  
+                  
+                    blocks.forEach(blockElem => {
+      if (blockElem.dataset.kind === "trap") {
+        let blockRect = blockElem.getBoundingClientRect();
+        let playerRect = player.getBoundingClientRect();
+
+        if (
+          playerRect.left < blockRect.right &&
+          playerRect.right > blockRect.left &&
+          playerRect.top < blockRect.bottom &&
+          playerRect.bottom > blockRect.top
+        ) {
+          if (!blockElem.dataset.triggered) {
+            blockElem.dataset.triggered = true
+            if (pos.health > invincibleThreshold) 
+            pos.health -= 10;
+            console.log("Trap triggered! Health:", pos.health);
+
+            
+
+            // Update health bar
+            healthBar.style.width = pos.health + "%";
+
+            // Deactivate trap (optional)
+            blockElem.style.backgroundColor = "gray";
+            setTimeout(() => {
+              blockElem.remove();
+              blocks = blocks.filter(b => b !== blockElem);
+            }, 500);
+          }
+        }
+      }
+    });
+
                     if (document.activeElement !== input && !dead) {
                         if (keys['a']) { worldX = Math.min(worldX + 3, 5000); pos.x = Math.max(pos.x - 3, -5000); }
                         if (keys['w']) { worldY = Math.min(worldY + 3, 5000); pos.y = Math.max(pos.y - 3, -5000); }
@@ -374,13 +421,8 @@
                         sword.style.display = 'none';
                         pos.heldItem = "none";
                     }
-                    if (pos.health > 100) { 
-                        document.body.textContent = "stop cheating cheater";
-                        return;
-                    }
-                    if (pos.username == "") {
-                        document.body.textContent = "stop cheating cheater";
-                    }
+
+
                     if (bKey) {
                         sword.style.backgroundColor = "red";
                     } else {
@@ -642,6 +684,20 @@
             let canPlaceBlock = true;
             const blockCooldown = 250;
             document.addEventListener("click", (event) => {
+                if (currentSlot == 6 && true) { // Trap slot
+                let clickedElem = document.elementFromPoint(e.clientX, e.clientY);
+                if (clickedElem.id == 'player' || clickedElem.id == "wall" || clickedElem.id == 'block') {
+                return;
+                }
+                push(blockRef, {
+                'x': e.clientX - worldX - 25,
+                'y': e.clientY - worldY - 25,
+               'color': "purple", // Trap color
+                'kind': "trap"
+                 });
+                 set(blockRef, null);
+                }
+
                 if (currentSlot == 2 && canPlaceBlock && !dead && objectSelector) {
                     let clickedElement = document.elementFromPoint(event.clientX, event.clientY);
                     if (clickedElement.id == "player" || clickedElement.id == "wall" || clickedElement.id == "block") {
@@ -792,6 +848,23 @@
             }
             setInterval(getOnlinePlayers, 100);
             set(playerRefA, null);
+            
+            document.addEventListener("click", e => {
+  if (currentSlot == 6) {
+    console.log("Attempting to place trap...");
+    push(blockRef, {
+      'x': e.clientX - worldX - 25,
+      'y': e.clientY - worldY - 25,
+      'color': "red",
+      'kind': "trap"
+
+    });
+  }
+});
+
+const invincibleThreshold = 33; // Health threshold for immunity
+
+            
         </script>
     </body>
 </html>
