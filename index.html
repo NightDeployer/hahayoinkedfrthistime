@@ -58,17 +58,17 @@
     </head>
     <body>
         <div id="dashCooldown" style="
-        position: absolute;
-        top: 20px;
-        right: 20px; /* Change this to move it to the top-right corner */
-        width: 150px;
-        height: 20px;
-        background-color: rgba(100, 100, 100, 0.5);
-        border: 2px solid black;
-        border-radius: 5px;
-        overflow: hidden;
-        display: none; /* Hidden until dash is used */
-    ">
+            position: absolute;
+            top: 20px;
+            right: 20px; 
+            width: 150px;
+            height: 20px;
+            background-color: rgba(100, 100, 100, 0.5);
+            border: 2px solid black;
+            border-radius: 5px;
+            overflow: hidden;
+            display: none; 
+        ">
             <div id="dashCooldownBar" style="
                 width: 100%;
                 height: 100%;
@@ -76,6 +76,7 @@
                 transition: width 0.1s linear;
             "></div>
         </div>
+
         <div id="usernamePopup">
             <p id="onlinePlayers" style="margin: 0px;">online players: 0</p>
             <p id="version" style="margin-top: 0px;"></p>
@@ -84,6 +85,7 @@
             <button id="usernameButton" style="display: none;">submit</button>
             <p id="errorText" style="display: none;">get the new version to play bruh</p>
         </div>
+
         <div style="display: none;" id="main">
             <p id="cords"></p>
             <p id="online-text">online players: 0</p>
@@ -99,6 +101,7 @@
             </div>
             <div id="chatArea"></div>
             <input id="messageInput" placeholder="press enter to message" maxlength="50"></input>
+
             <div id="slots">
                 <div class="slot" id="slot-1">1</div>
                 <div class="slot" id="slot-2">2<br>create</div>
@@ -106,6 +109,7 @@
                 <div class="slot" id="slot-4">4<br>bow</div>
                 <div class="slot" id="slot-5">5</div>
             </div>
+
             <div id="wall"></div>
             <div id="hover"></div>
             <div id="hoverChild" style="position: absolute;">
@@ -284,7 +288,8 @@
                 if (document.getElementById("usernameInput").value == "") {
                     return;
                 }
-                document.getElementById("usernameInput").value = document.getElementById("usernameInput").value.replace(/\s+/g, '');
+                document.getElementById("usernameInput").value = 
+                    document.getElementById("usernameInput").value.replace(/\s+/g, '');
                 push(messageRef, {
                     username: "System",
                     message: document.getElementById("usernameInput").value + " has joined the game",
@@ -327,7 +332,13 @@
                     newBlock.style.position = "absolute";
                     newBlock.style.zIndex = -1000;
                     newBlock.style.transform = "rotate(" + block.rotation + "deg)";
+
+                    // [ADDED FOR BOW-BLOCK BREAKING]
+                    // Store the DB key on the element so we can remove it when arrow hits it
+                    newBlock.dataset.id = snapshot.key;
+
                     if (block.kind == "rect") {
+                        // Adjust slightly if narrower
                         newBlock.x = block.x + 12.5;
                     } else {
                         newBlock.x = block.x;
@@ -538,16 +549,32 @@
                     blocks.forEach(block => {
                         let blockRect = block.getBoundingClientRect();
                         let playerRect = player.getBoundingClientRect();
-                        if ((keys['a'] || keys['ArrowLeft']) && playerRect.left < blockRect.right && playerRect.left > blockRect.left && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
+                        if ((keys['a'] || keys['ArrowLeft']) && 
+                            playerRect.left < blockRect.right && 
+                            playerRect.left > blockRect.left && 
+                            playerRect.bottom > blockRect.top && 
+                            playerRect.top < blockRect.bottom) {
                             pos.x += 3; worldX -= 3;
                         }
-                        if ((keys['d'] || keys['ArrowRight']) && playerRect.right > blockRect.left && playerRect.right < blockRect.right && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
+                        if ((keys['d'] || keys['ArrowRight']) && 
+                            playerRect.right > blockRect.left && 
+                            playerRect.right < blockRect.right && 
+                            playerRect.bottom > blockRect.top && 
+                            playerRect.top < blockRect.bottom) {
                             pos.x -= 3; worldX += 3;
                         }
-                        if ((keys['w'] || keys['ArrowUp']) && playerRect.top < blockRect.bottom && playerRect.top > blockRect.top && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
+                        if ((keys['w'] || keys['ArrowUp']) && 
+                            playerRect.top < blockRect.bottom && 
+                            playerRect.top > blockRect.top && 
+                            playerRect.right > blockRect.left && 
+                            playerRect.left < blockRect.right) {
                             pos.y += 3; worldY -= 3;
                         }
-                        if ((keys['s'] || keys['ArrowDown']) && playerRect.bottom > blockRect.top && playerRect.bottom < blockRect.bottom && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
+                        if ((keys['s'] || keys['ArrowDown']) && 
+                            playerRect.bottom > blockRect.top && 
+                            playerRect.bottom < blockRect.bottom && 
+                            playerRect.right > blockRect.left && 
+                            playerRect.left < blockRect.right) {
                             pos.y -= 3; worldY += 3;
                         }
                     });
@@ -563,16 +590,32 @@
                     terrainList.forEach(block => {
                         let blockRect = block.getBoundingClientRect();
                         let playerRect = player.getBoundingClientRect();
-                        if ((keys['a'] || keys['ArrowLeft']) && playerRect.left < blockRect.right && playerRect.left > blockRect.left && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
+                        if ((keys['a'] || keys['ArrowLeft']) && 
+                            playerRect.left < blockRect.right && 
+                            playerRect.left > blockRect.left && 
+                            playerRect.bottom > blockRect.top && 
+                            playerRect.top < blockRect.bottom) {
                             pos.x += 3; worldX -= 3;
                         }
-                        if ((keys['d'] || keys['ArrowRight']) && playerRect.right > blockRect.left && playerRect.right < blockRect.right && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
+                        if ((keys['d'] || keys['ArrowRight']) && 
+                            playerRect.right > blockRect.left && 
+                            playerRect.right < blockRect.right && 
+                            playerRect.bottom > blockRect.top && 
+                            playerRect.top < blockRect.bottom) {
                             pos.x -= 3; worldX += 3;
                         }
-                        if ((keys['w'] || keys['ArrowUp']) && playerRect.top < blockRect.bottom && playerRect.top > blockRect.top && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
+                        if ((keys['w'] || keys['ArrowUp']) && 
+                            playerRect.top < blockRect.bottom && 
+                            playerRect.top > blockRect.top && 
+                            playerRect.right > blockRect.left && 
+                            playerRect.left < blockRect.right) {
                             pos.y += 3; worldY -= 3;
                         }
-                        if ((keys['s'] || keys['ArrowDown']) && playerRect.bottom > blockRect.top && playerRect.bottom < blockRect.bottom && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
+                        if ((keys['s'] || keys['ArrowDown']) && 
+                            playerRect.bottom > blockRect.top && 
+                            playerRect.bottom < blockRect.bottom && 
+                            playerRect.right > blockRect.left && 
+                            playerRect.left < blockRect.right) {
                             pos.y -= 3; worldY += 3;
                         }
                     });
@@ -623,8 +666,12 @@
                                 let blockRect = block.getBoundingClientRect();
                                 if (swordRect.left < blockRect.right && swordRect.right > blockRect.left &&
                                     swordRect.top < blockRect.bottom && swordRect.bottom > blockRect.top) {
+                                    // Remove from DOM
                                     block.remove();
+                                    // Remove from our local array
                                     blocks = blocks.filter(b => b !== block);
+                                    // Also remove from Firebase
+                                    remove(ref(database, "blocks/" + block.dataset.id));
                                 }
                             }
                         });
@@ -691,10 +738,20 @@
                         let blockRect = blocks[j].getBoundingClientRect();
                         if (arrowRect.left < blockRect.right && arrowRect.right > blockRect.left &&
                             arrowRect.top < blockRect.bottom && arrowRect.bottom > blockRect.top) {
+                            
+                            // [ADDED FOR BOW-BLOCK BREAKING]
+                            // 1) Remove the arrow
                             removeArrowFromDB(arrowEl.dataset.id);
+                            // 2) Remove the block from DB
+                            remove(ref(database, "blocks/" + blocks[j].dataset.id));
+                            // 3) Remove from DOM and local array
+                            blocks[j].remove();
+                            blocks.splice(j, 1);
+                            
                             break;
                         }
                     }
+
                     // Check collision with local player
                     let playerRect = player.getBoundingClientRect();
                     if (arrowRect.left < playerRect.right && arrowRect.right > playerRect.left &&
@@ -763,14 +820,7 @@
                     messageElement.style.fontStyle = "italic";
                     messageElement.style.color = "gray";
                 }
-                if (message.message && message.message.includes("/playsound")) {
-                    let command = message.message.split(' ');
-                    let sound = command[1];
-                    let audioElement = document.createElement("audio");
-                    audioElement.src = "https://raw.githubusercontent.com/seaotter6382/seaotter6382.github.io/refs/heads/main/sounds/" + sound + ".mp3";
-                    audioElement.autoplay = true;
-                    document.body.appendChild(audioElement);
-                }
+
                 if (message.message == "/clear") {
                     set(blockRef, null);
                     blocks.forEach(block => {
@@ -891,11 +941,12 @@
                                     otherPlayerHealth.style.width = otherPlayer.health + "%";
                                     otherPlayerDiv.style.transform = `translate(-50%, -50%) rotate(${otherPlayer.angle}deg)`;
                                     otherPlayerUsername.textContent = otherPlayer.username;
-                                    otherPlayerUsername.style.left = worldX + otherPlayer.x 
-                                        + otherPlayerDiv.offsetWidth / 2 - otherPlayerUsername.offsetWidth / 2 - 25 + "px";
+                                    otherPlayerUsername.style.left = 
+                                        worldX + otherPlayer.x + otherPlayerDiv.offsetWidth / 2 
+                                        - otherPlayerUsername.offsetWidth / 2 - 25 + "px";
                                     otherPlayerUsername.style.top = worldY + otherPlayer.y - 75 + "px";
-                                    otherPlayerHealthBack.style.left = worldX + otherPlayer.x 
-                                        + otherPlayerDiv.offsetWidth / 2 - 75 + "px";
+                                    otherPlayerHealthBack.style.left = 
+                                        worldX + otherPlayer.x + otherPlayerDiv.offsetWidth / 2 - 75 + "px";
                                     otherPlayerHealthBack.style.top = worldY + otherPlayer.y + 40 + "px";
                                     otherPlayerDiv.style.backgroundColor = otherPlayer.color;
 
@@ -913,6 +964,7 @@
                                                 swordRect.top < blockRect.bottom && swordRect.bottom > blockRect.top) {
                                                 block.remove();
                                                 blocks = blocks.filter(b => b !== block);
+                                                remove(ref(database, "blocks/" + block.dataset.id));
                                             }
                                         });
                                     } else {
