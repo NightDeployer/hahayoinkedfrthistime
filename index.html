@@ -19,6 +19,19 @@
             #healthBar { z-index: 10; left: 50%; transform: translateX(-50%); position: absolute; height: 10px; width: 100px; background-color: rgb(255, 0, 0); }
             #healthBarBack { left: 50%; transform: translateX(-50%);  bottom: 85; z-index: -10; position: absolute; height: 10px; width: 100px; background-color: rgb(75, 75, 75); border: 2px solid black; }
             #sword { transition: 0.1s linear; top: -30px; left: 45px; height: 75px; width: 10px; background-color: rgb(0, 0, 0); position: absolute; transform-origin: bottom; transform: rotate(90deg); }
+            /* Bow model for the local player */
+            #bow {
+                transition: 0.1s linear;
+                top: -30px;
+                left: 40px;
+                height: 70px;
+                width: 5px;
+                background-color: brown;
+                position: absolute;
+                transform-origin: center;
+                transform: rotate(90deg);
+                display: none;
+            }
             #colorPicker { position: absolute; width: 200px; height: 200px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-wrap: wrap; z-index: 1000; }
             .color-section { position: absolute; width: 50px; height: 50px; border-radius: 50%; cursor: pointer; transition: transform 0.5s ease, opacity 0.5s ease; transform: translate(0, 0); opacity: 1; }
             .terrain { z-index: -100; height: 50px; width: 50px; background-color: green; position: absolute; }
@@ -40,35 +53,21 @@
             #sCircle { display: inline-block; height: 50px; width: 50px; margin: 10px; background-color: white; border-radius: 50%; }
             #sSign { display: inline-block; height: 50px; width: 50px; margin: 10px; background-color: white; }
             #signText { position: absolute; top: 6px; left: 215px; }
-
-            /* Bow model for the local player */
-            #bow {
-                transition: 0.1s linear;
-                top: -30px;
-                left: 40px;
-                height: 70px;
-                width: 5px;
-                background-color: brown;
-                position: absolute;
-                transform-origin: center;
-                transform: rotate(90deg);
-                display: none;
-            }
         </style>
     </head>
     <body>
         <div id="dashCooldown" style="
-            position: absolute;
-            top: 20px;
-            right: 20px; 
-            width: 150px;
-            height: 20px;
-            background-color: rgba(100, 100, 100, 0.5);
-            border: 2px solid black;
-            border-radius: 5px;
-            overflow: hidden;
-            display: none; 
-        ">
+        position: absolute;
+        top: 20px;
+        right: 20px; /* Change this to move it to the top-right corner */
+        width: 150px;
+        height: 20px;
+        background-color: rgba(100, 100, 100, 0.5);
+        border: 2px solid black;
+        border-radius: 5px;
+        overflow: hidden;
+        display: none; /* Hidden until dash is used */
+    ">
             <div id="dashCooldownBar" style="
                 width: 100%;
                 height: 100%;
@@ -76,7 +75,6 @@
                 transition: width 0.1s linear;
             "></div>
         </div>
-
         <div id="usernamePopup">
             <p id="onlinePlayers" style="margin: 0px;">online players: 0</p>
             <p id="version" style="margin-top: 0px;"></p>
@@ -85,7 +83,6 @@
             <button id="usernameButton" style="display: none;">submit</button>
             <p id="errorText" style="display: none;">get the new version to play bruh</p>
         </div>
-
         <div style="display: none;" id="main">
             <p id="cords"></p>
             <p id="online-text">online players: 0</p>
@@ -101,7 +98,6 @@
             </div>
             <div id="chatArea"></div>
             <input id="messageInput" placeholder="press enter to message" maxlength="50"></input>
-
             <div id="slots">
                 <div class="slot" id="slot-1">1</div>
                 <div class="slot" id="slot-2">2<br>create</div>
@@ -109,7 +105,6 @@
                 <div class="slot" id="slot-4">4<br>bow</div>
                 <div class="slot" id="slot-5">5</div>
             </div>
-
             <div id="wall"></div>
             <div id="hover"></div>
             <div id="hoverChild" style="position: absolute;">
@@ -119,7 +114,7 @@
                     <div id="sRect"></div>
                     <div id="sCircle"></div>
                     <div id="sSign"></div>
-                    <p id="signText">Sign</p>
+                    <p id="signText">Water Client Is Back</p>
                 </div>
             </div>
             <div id="healthBarBack">
@@ -139,7 +134,6 @@
                 <h1>inventory</h1>
             </div>
         </div>
-        
         <script type="module">
             let playerTransition = "0.05s linear";
 
@@ -149,7 +143,7 @@
 
             // Firebase config
             const firebaseConfig = {
-                apiKey: "AIzaSyBdqoHJ58sFCkpdHLw7mKUg_Bpi7xc7ok",
+                apiKey: "AIzaSyBdqoHJ58sFCcKpdHLw7mKUg_Bpi7xc7ok",
                 authDomain: "game-10962.firebaseapp.com",
                 databaseURL: "https://game-10962-default-rtdb.firebaseio.com",
                 projectId: "game-10962",
@@ -180,14 +174,13 @@
             let sendValue = 0;
             let showInput = false;
             hoverElement.style.width = "50px";
-
             const urlParams = new URLSearchParams(window.location.search);
             const width = urlParams.get("width");
             const height = urlParams.get("height");
             let enteredUser = false;
 
-            // Player data
-            let pos = { 
+            // Player position & data
+            let pos = {
                 xSize: 100, 
                 ySize: 100, 
                 x: window.innerWidth / 2 - 25, 
@@ -198,7 +191,7 @@
                 health: 100, 
                 heldItem: "none", 
                 clicked: false, 
-                deleteSword: false 
+                deleteSword: false
             };
 
             let playerID = Math.floor(Math.random() * (10000000000 - 1 + 1)) + 1;
@@ -210,25 +203,21 @@
 
             // Bow mechanics
             let canShootBow = true;    // whether the player can shoot
-            const bowCooldown = 1000;  // 1 second cooldown
+            const bowCooldown = 1000;  // 2 seconds cooldown
             const arrowSpeed = 20;
             const arrowDamage = 20;
             const arrowRange = 1000;   // max distance before arrow disappears
 
             // Arrows
             let arrowsRef = ref(database, "arrows/");
-            let arrows = [];  // local array for arrow DOM
+            let arrows = [];  // local array to keep track of arrow DOM elements & data
 
             let canUseSword = true;
             let version = "0";
             let gameVersion = 1.2;
             document.getElementById("version").textContent = "version " + gameVersion;
 
-            // Movement speeds (normal vs bow)
-            const normalSpeed = 3; 
-            const bowSpeed = 2; // slower movement while holding bow
-
-            // Check version
+            // Check version in DB
             get(ref(database, '/version')).then((snapshot) => {
                 if (snapshot.exists()) {
                     const intValue = snapshot.val();
@@ -253,11 +242,11 @@
             let terrainList = [];
             let inGame = false;
             let currentSlot = 1;
-            let objectSelector = true; 
+            let objectSelector = true;
             let currentObject = "cube";
             let slots = document.getElementsByClassName("slot");
 
-            // Positioning of slot display
+            // Position slots
             slots[0].style.left = window.innerWidth / 2 - 185 + "px";
             slots[1].style.left = window.innerWidth / 2 - 115 + "px";
             slots[2].style.left = window.innerWidth / 2 - 45 + "px";
@@ -288,23 +277,18 @@
                 if (document.getElementById("usernameInput").value == "") {
                     return;
                 }
-                document.getElementById("usernameInput").value = 
-                    document.getElementById("usernameInput").value.replace(/\s+/g, '');
+                document.getElementById("usernameInput").value = document.getElementById("usernameInput").value.replace(/\s+/g, '');
                 push(messageRef, {
                     username: "System",
                     message: document.getElementById("usernameInput").value + " has joined the game",
                     color: pos.color
                 });
                 set(messageRef, null);
-
                 pos.username = document.getElementById("usernameInput").value;
                 document.getElementById("usernamePopup").style.display = "none";
-
-                // Start game
                 gameLoop();
                 getTerrain();
                 document.getElementById("main").style.display = "block";
-
                 let playerUsername = document.createElement("p");
                 playerUsername.textContent = pos.username;
                 playerUsername.style.position = "absolute";
@@ -333,12 +317,9 @@
                     newBlock.style.zIndex = -1000;
                     newBlock.style.transform = "rotate(" + block.rotation + "deg)";
 
-                    // [ADDED FOR BOW-BLOCK BREAKING]
-                    // Store the DB key on the element so we can remove it when arrow hits it
                     newBlock.dataset.id = snapshot.key;
 
                     if (block.kind == "rect") {
-                        // Adjust slightly if narrower
                         newBlock.x = block.x + 12.5;
                     } else {
                         newBlock.x = block.x;
@@ -359,13 +340,14 @@
                 // Listen for new arrows in DB
                 onChildAdded(arrowsRef, (snapshot) => {
                     const arrowData = snapshot.val();
+                    // Create DOM element for arrow
                     let arrowDiv = document.createElement("div");
                     arrowDiv.classList.add("arrow");
                     arrowDiv.style.position = "absolute";
                     arrowDiv.style.width = "6px";
                     arrowDiv.style.height = "6px";
-                    arrowDiv.style.backgroundColor = "black";  
-                    arrowDiv.dataset.id = snapshot.key;
+                    arrowDiv.style.backgroundColor = "black";  // simple black square
+                    arrowDiv.dataset.id = snapshot.key; // store arrow's DB key
                     arrowDiv.dataset.shooter = arrowData.shooterID;
                     arrowDiv.x = arrowData.x;
                     arrowDiv.y = arrowData.y;
@@ -373,7 +355,7 @@
                     arrowDiv.vy = arrowData.vy;
                     arrowDiv.angle = arrowData.angle;
                     arrowDiv.distanceTraveled = 0;
-
+                    // Place arrow
                     arrowDiv.style.left = (worldX + arrowDiv.x) + "px";
                     arrowDiv.style.top = (worldY + arrowDiv.y) + "px";
                     arrowDiv.style.transform = `rotate(${arrowDiv.angle}deg)`;
@@ -389,26 +371,20 @@
 
             document.addEventListener("keydown", (event) => {
                 keys[event.key] = true;
-
-                // Toggle sword deletion "b"
                 if (event.key == "b" && inGame && document.activeElement !== input) {
-                    bKey = !bKey;
+                    bKey = !bKey
                     pos.deleteSword = bKey;
                 }
-                // Toggle block selector "f"
                 if (event.key == "f" && inGame && document.activeElement !== input && currentSlot == 2) {
                     objectSelector = !objectSelector;
                 }
-                // Rotate block "r"
                 if (event.key == "r" && inGame && document.activeElement !== input && currentSlot == 2) {
                     rotation += 90;
                     hoverElement.style.transform = 'rotate(' + rotation + 'deg)';
                 }
-                // Inventory "e"
                 if (event.key == "e" && inGame && document.activeElement !== input) {
                     inventory.style.display = (inventory.style.display === "none") ? "block" : "none";
                 }
-                // Chat "Enter"
                 if (event.key == "Enter") {     
                     if (document.activeElement !== input) {
                         input.focus();
@@ -425,7 +401,6 @@
                         input.blur();
                     }
                 }
-                // Show player list "Tab"
                 if (event.key == "Tab") {
                     event.preventDefault();
                     if (invMain.style.display == "none") {
@@ -434,17 +409,17 @@
                         invMain.style.display = 'none';
                     }
                 }
-                // Sword usage "Space"
+                // Sword usage with space bar
                 if (event.key == " " && currentSlot == 3 && canUseSword) {
                     swordAttack();
                 }
-                // Bow usage "Space"
+                // Bow usage with space bar
                 if (event.key == " " && currentSlot == 4 && canShootBow) {
                     shootArrow();
                 }
             })
 
-            document.addEventListener("mousemove", function(event) {
+            document.addEventListener('mousemove', function(event) {
                 if (objectSelector) {
                     hoverElement.style.left = event.clientX - parseInt(hoverElement.style.width) / 2 + "px";
                     hoverElement.style.top = event.clientY - 25 + "px";
@@ -464,7 +439,6 @@
                 delete keys[event.key];
             });
 
-            // Clear existing players
             set(playerRefA, null);
             player.style.left = pos.x + "px";
             player.style.top = pos.y + "px";
@@ -484,17 +458,22 @@
 
             // Shoot an arrow (bow)
             function shootArrow() {
+                // Start cooldown
                 canShootBow = false;
                 setTimeout(() => { 
                     canShootBow = true;
                 }, bowCooldown);
 
+                // Convert angle to radians
                 let rad = pos.angle * (Math.PI / 180);
                 let vx = Math.cos(rad) * arrowSpeed;
                 let vy = Math.sin(rad) * arrowSpeed;
+
+                // The arrow starts at the player's center
                 let arrowX = pos.x;
                 let arrowY = pos.y;
 
+                // Push arrow data to Firebase
                 push(arrowsRef, {
                     shooterID: playerID,
                     x: arrowX,
@@ -508,25 +487,21 @@
             function gameLoop() {
                 if (player) {
                     if (document.activeElement !== input && !dead) {
-
-                        // Choose movement speed based on currentSlot
-                        let moveSpeed = (currentSlot === 4) ? bowSpeed : normalSpeed;
-
                         if (keys['a'] || keys['ArrowLeft']) { 
-                            worldX = Math.min(worldX + moveSpeed, 5000); 
-                            pos.x = Math.max(pos.x - moveSpeed, -5000); 
+                            worldX = Math.min(worldX + 3, 5000); 
+                            pos.x = Math.max(pos.x - 3, -5000); 
                         }
                         if (keys['w'] || keys['ArrowUp']) { 
-                            worldY = Math.min(worldY + moveSpeed, 5000); 
-                            pos.y = Math.max(pos.y - moveSpeed, -5000); 
+                            worldY = Math.min(worldY + 3, 5000); 
+                            pos.y = Math.max(pos.y - 3, -5000); 
                         }
                         if (keys['s'] || keys['ArrowDown']) { 
-                            worldY = Math.max(worldY - moveSpeed, -5000); 
-                            pos.y = Math.min(pos.y + moveSpeed, 5000); 
+                            worldY = Math.max(worldY - 3, -5000); 
+                            pos.y = Math.min(pos.y + 3, 5000); 
                         }
                         if (keys['d'] || keys['ArrowRight']) { 
-                            worldX = Math.max(worldX - moveSpeed, -5000); 
-                            pos.x = Math.min(pos.x + moveSpeed, 5000); 
+                            worldX = Math.max(worldX - 3, -5000); 
+                            pos.x = Math.min(pos.x + 3, 5000); 
                         }
                         if (keys['1']) { currentSlot = 1; }
                         if (keys['2']) { currentSlot = 2; }
@@ -545,145 +520,104 @@
                     hoverChild.style.left = hoverElement.style.left;
                     hoverChild.style.top = hoverElement.style.top;
 
-                    // collisions with blocks
+                    // collision checks with blocks (player)
                     blocks.forEach(block => {
                         let blockRect = block.getBoundingClientRect();
                         let playerRect = player.getBoundingClientRect();
-                        if ((keys['a'] || keys['ArrowLeft']) && 
-                            playerRect.left < blockRect.right && 
-                            playerRect.left > blockRect.left && 
-                            playerRect.bottom > blockRect.top && 
-                            playerRect.top < blockRect.bottom) {
+                        if ((keys['a'] || keys['ArrowLeft']) && playerRect.left < blockRect.right && playerRect.left > blockRect.left && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
                             pos.x += 3; worldX -= 3;
                         }
-                        if ((keys['d'] || keys['ArrowRight']) && 
-                            playerRect.right > blockRect.left && 
-                            playerRect.right < blockRect.right && 
-                            playerRect.bottom > blockRect.top && 
-                            playerRect.top < blockRect.bottom) {
+                        if ((keys['d'] || keys['ArrowRight']) && playerRect.right > blockRect.left && playerRect.right < blockRect.right && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
                             pos.x -= 3; worldX += 3;
                         }
-                        if ((keys['w'] || keys['ArrowUp']) && 
-                            playerRect.top < blockRect.bottom && 
-                            playerRect.top > blockRect.top && 
-                            playerRect.right > blockRect.left && 
-                            playerRect.left < blockRect.right) {
+                        if ((keys['w'] || keys['ArrowUp']) && playerRect.top < blockRect.bottom && playerRect.top > blockRect.top && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
                             pos.y += 3; worldY -= 3;
                         }
-                        if ((keys['s'] || keys['ArrowDown']) && 
-                            playerRect.bottom > blockRect.top && 
-                            playerRect.bottom < blockRect.bottom && 
-                            playerRect.right > blockRect.left && 
-                            playerRect.left < blockRect.right) {
+                        if ((keys['s'] || keys['ArrowDown']) && playerRect.bottom > blockRect.top && playerRect.bottom < blockRect.bottom && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
                             pos.y -= 3; worldY += 3;
                         }
                     });
 
-                    // Display/hide block selector
                     if (!objectSelector) {
                         document.getElementById("blockSelector").style.display = "block";
                     } else {
                         document.getElementById("blockSelector").style.display = 'none';
                     }
 
-                    // collisions with terrain
+                    // collision checks with terrain (player)
                     terrainList.forEach(block => {
                         let blockRect = block.getBoundingClientRect();
                         let playerRect = player.getBoundingClientRect();
-                        if ((keys['a'] || keys['ArrowLeft']) && 
-                            playerRect.left < blockRect.right && 
-                            playerRect.left > blockRect.left && 
-                            playerRect.bottom > blockRect.top && 
-                            playerRect.top < blockRect.bottom) {
+                        if ((keys['a'] || keys['ArrowLeft']) && playerRect.left < blockRect.right && playerRect.left > blockRect.left && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
                             pos.x += 3; worldX -= 3;
                         }
-                        if ((keys['d'] || keys['ArrowRight']) && 
-                            playerRect.right > blockRect.left && 
-                            playerRect.right < blockRect.right && 
-                            playerRect.bottom > blockRect.top && 
-                            playerRect.top < blockRect.bottom) {
+                        if ((keys['d'] || keys['ArrowRight']) && playerRect.right > blockRect.left && playerRect.right < blockRect.right && playerRect.bottom > blockRect.top && playerRect.top < blockRect.bottom) {
                             pos.x -= 3; worldX += 3;
                         }
-                        if ((keys['w'] || keys['ArrowUp']) && 
-                            playerRect.top < blockRect.bottom && 
-                            playerRect.top > blockRect.top && 
-                            playerRect.right > blockRect.left && 
-                            playerRect.left < blockRect.right) {
+                        if ((keys['w'] || keys['ArrowUp']) && playerRect.top < blockRect.bottom && playerRect.top > blockRect.top && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
                             pos.y += 3; worldY -= 3;
                         }
-                        if ((keys['s'] || keys['ArrowDown']) && 
-                            playerRect.bottom > blockRect.top && 
-                            playerRect.bottom < blockRect.bottom && 
-                            playerRect.right > blockRect.left && 
-                            playerRect.left < blockRect.right) {
+                        if ((keys['s'] || keys['ArrowDown']) && playerRect.bottom > blockRect.top && playerRect.bottom < blockRect.bottom && playerRect.right > blockRect.left && playerRect.left < blockRect.right) {
                             pos.y -= 3; worldY += 3;
                         }
                     });
 
-                    // Health bar
                     healthBar.style.width = pos.health + "%";
 
-                    // Show the create hover if slot = 2
+                    // show/hide hover for create slot
                     if (currentSlot == 2) {
                         hoverElement.style.display = "block";
                     } else {
                         hoverElement.style.display = "none";
                     }
 
-                    // sword / bow logic
+                    // sword slot
                     if (currentSlot == 3) {
                         sword.style.display = 'block';
                         bow.style.display = 'none';
                         pos.heldItem = "sword";
                     }
+                    // bow slot
                     else if (currentSlot == 4) {
                         sword.style.display = 'none';
                         bow.style.display = 'block';
                         pos.heldItem = "bow";
                     } 
                     else {
+                        // everything else
                         if (currentSlot != 3) sword.style.display = 'none';
                         if (currentSlot != 4) bow.style.display = 'none';
                         pos.heldItem = "none";
                     }
 
-                    // If empty username
                     if (pos.username == "") {
                         document.body.textContent = "stop cheating cheater";
                     }
-                    // Sword color if bKey pressed
                     if (bKey) {
                         sword.style.backgroundColor = "red";
                     } else {
                         sword.style.backgroundColor = "black";
                     }
-
                     // Sword-based block destruction
                     if (currentSlot == 3) {
                         blocks.forEach(block => {
                             if (sword.style.display == 'block' && bKey) {
                                 let swordRect = sword.getBoundingClientRect();
                                 let blockRect = block.getBoundingClientRect();
-                                if (swordRect.left < blockRect.right && swordRect.right > blockRect.left &&
-                                    swordRect.top < blockRect.bottom && swordRect.bottom > blockRect.top) {
-                                    // Remove from DOM
+                                if (swordRect.left < blockRect.right && swordRect.right > blockRect.left && swordRect.top < blockRect.bottom && swordRect.bottom > blockRect.top) {
                                     block.remove();
-                                    // Remove from our local array
                                     blocks = blocks.filter(b => b !== block);
-                                    // Also remove from Firebase
-                                    remove(ref(database, "blocks/" + block.dataset.id));
                                 }
                             }
                         });
                     }
-
-                    // Basic auto-healing
+                    // Automatic healing
                     if (pos.health < 100) {
-                        pos.health += 0.125; 
+                        pos.health += 0.125;
                         if (pos.health > 100) pos.health = 100; 
                     }
 
-                    // Update and simulate arrows
+                    // Update / move arrows (each client simulates them)
                     updateArrows();
 
                     requestAnimationFrame(gameLoop);
@@ -691,8 +625,7 @@
                     renderTerrain();
                     getObjectCount();
                     updateSlotColors();
-
-                    // position blocks
+                    // update block positions
                     blocks.forEach(block => {
                         let inViewX = block.x + worldX >= -200 && block.x + worldX <= window.innerWidth + 200;
                         let inViewY = block.y + worldY >= -200 && block.y + worldY <= window.innerHeight + 200;
@@ -705,7 +638,6 @@
                         }
                     });
                 }
-                // Send player data occasionally
                 if (sendValue >= 5) {
                     sendValue = 0;
                     set(playerRef, pos);
@@ -717,6 +649,8 @@
             function updateArrows() {
                 for (let i = arrows.length - 1; i >= 0; i--) {
                     let arrowEl = arrows[i];
+
+                    // Update position
                     arrowEl.x += arrowEl.vx;
                     arrowEl.y += arrowEl.vy;
                     arrowEl.distanceTraveled = arrowEl.distanceTraveled || 0;
@@ -728,7 +662,7 @@
                         continue;
                     }
 
-                    // Position arrow
+                    // Position arrow on screen
                     arrowEl.style.left = (worldX + arrowEl.x) + "px";
                     arrowEl.style.top = (worldY + arrowEl.y) + "px";
 
@@ -738,27 +672,27 @@
                         let blockRect = blocks[j].getBoundingClientRect();
                         if (arrowRect.left < blockRect.right && arrowRect.right > blockRect.left &&
                             arrowRect.top < blockRect.bottom && arrowRect.bottom > blockRect.top) {
-                            
-                            // [ADDED FOR BOW-BLOCK BREAKING]
-                            // 1) Remove the arrow
-                            removeArrowFromDB(arrowEl.dataset.id);
-                            // 2) Remove the block from DB
-                            remove(ref(database, "blocks/" + blocks[j].dataset.id));
-                            // 3) Remove from DOM and local array
-                            blocks[j].remove();
-                            blocks.splice(j, 1);
-                            
-                            break;
+                                
+                                removeArrowFromDB(arrowEl.dataset.id);
+
+// remove the block in Firebase
+remove(ref(database, "blocks/" + blocks[j].dataset.id));
+
+// remove from DOM and local array
+blocks[j].remove();
+blocks.splice(j, 1);
                         }
                     }
 
-                    // Check collision with local player
+                    // Check collision with this player
                     let playerRect = player.getBoundingClientRect();
                     if (arrowRect.left < playerRect.right && arrowRect.right > playerRect.left &&
                         arrowRect.top < playerRect.bottom && arrowRect.bottom > playerRect.top) {
+                        // If the arrow isn't from this player
                         if (parseInt(arrowEl.dataset.shooter) !== playerID && !dead) {
                             pos.health -= arrowDamage;
                             if (pos.health <= 0) {
+                                // Player "dies"
                                 pos.health = 100;
                                 dead = true;
                                 let originalColor = pos.color;
@@ -775,6 +709,7 @@
                             continue;
                         }
                     }
+
                     // Check collision with other players
                     let otherPlayers = document.getElementsByClassName("otherPlayer");
                     for (let k = 0; k < otherPlayers.length; k++) {
@@ -782,7 +717,9 @@
                         let opRect = op.getBoundingClientRect();
                         if (arrowRect.left < opRect.right && arrowRect.right > opRect.left &&
                             arrowRect.top < opRect.bottom && arrowRect.bottom > opRect.top) {
+                            // If arrow's shooter is not this other player
                             if (parseInt(arrowEl.dataset.shooter) !== parseInt(op.id)) {
+                                // In a real server-based setup, you'd confirm hits server-side.
                                 removeArrowFromDB(arrowEl.dataset.id);
                                 break;
                             }
@@ -792,6 +729,7 @@
             }
 
             function removeArrowFromDB(arrowID) {
+                // Remove from local array
                 for (let i = 0; i < arrows.length; i++) {
                     if (arrows[i].dataset.id === arrowID) {
                         let arrowEl = arrows[i];
@@ -800,6 +738,7 @@
                         break;
                     }
                 }
+                // Remove from Firebase
                 remove(ref(database, "arrows/" + arrowID));
             }
 
@@ -820,7 +759,14 @@
                     messageElement.style.fontStyle = "italic";
                     messageElement.style.color = "gray";
                 }
-
+                if (message.message && message.message.includes("/playsound")) {
+                    let command = message.message.split(' ');
+                    let sound = command[1];
+                    let audioElement = document.createElement("audio");
+                    audioElement.src = "https://raw.githubusercontent.com/seaotter6382/seaotter6382.github.io/refs/heads/main/sounds/" + sound + ".mp3";
+                    audioElement.autoplay = true;
+                    document.body.appendChild(audioElement);
+                }
                 if (message.message == "/clear") {
                     set(blockRef, null);
                     blocks.forEach(block => {
@@ -848,14 +794,17 @@
                             for (let key in items) {
                                 const otherPlayer = items[key];
                                 if (key != playerID) {
+                                    // Container div for the other player
                                     let otherPlayerDiv = document.getElementById(key);
                                     let otherPlayerUsername = document.getElementById(key + "username");
                                     let otherPlayerHealth = document.getElementById(key + "health");
                                     let otherPlayerHealthBack = document.getElementById(key + "healthBack");
                                     let otherPlayerSword = document.getElementById(key + "sword");
+
+                                    // NEW: Bow element for other players
                                     let otherPlayerBow = document.getElementById(key + "bow");
 
-                                    // Create if missing
+                                    // Create health bar background if missing
                                     if (!otherPlayerHealthBack) {
                                         otherPlayerHealthBack = document.createElement("div");
                                         otherPlayerHealthBack.id = key + "healthBack";
@@ -867,6 +816,7 @@
                                         otherPlayerHealthBack.style.zIndex = 99;
                                         document.getElementById("playerContainer").appendChild(otherPlayerHealthBack);
                                     }
+                                    // Create health bar if missing
                                     if (!otherPlayerHealth) {
                                         otherPlayerHealth = document.createElement("div");
                                         otherPlayerHealth.id = key + "health";
@@ -878,6 +828,7 @@
                                         otherPlayerHealth.style.zIndex = 100;
                                         document.getElementById(key + "healthBack").appendChild(otherPlayerHealth);
                                     }
+                                    // Create username element if missing
                                     if (!otherPlayerUsername) {
                                         otherPlayerUsername = document.createElement("p");
                                         otherPlayerUsername.id = key + "username";
@@ -889,6 +840,7 @@
                                         otherPlayerUsername.style.zIndex = 100;
                                         document.getElementById("playerContainer").appendChild(otherPlayerUsername);
                                     }
+                                    // Create container div if missing
                                     if (!otherPlayerDiv) {
                                         otherPlayerDiv = document.createElement("div");
                                         otherPlayerDiv.id = key;
@@ -896,6 +848,7 @@
                                         otherPlayerDiv.style.position = "absolute";
                                         document.getElementById("playerContainer").appendChild(otherPlayerDiv);
                                     }
+                                    // Create sword if missing
                                     if (!otherPlayerSword) {
                                         otherPlayerSword = document.createElement("div");
                                         otherPlayerSword.style.height = "75px";
@@ -908,6 +861,7 @@
                                         otherPlayerSword.style.transform = "rotate(90deg)";
                                         otherPlayerDiv.appendChild(otherPlayerSword);
                                     }
+                                    // Create bow if missing
                                     if (!otherPlayerBow) {
                                         otherPlayerBow = document.createElement("div");
                                         otherPlayerBow.id = key + "bow";
@@ -923,12 +877,14 @@
                                         otherPlayerDiv.appendChild(otherPlayerBow);
                                     }
 
-                                    // sword vs bow display
+                                    // Show sword if they are holding it
                                     if (otherPlayer.heldItem == "sword") {
                                         otherPlayerSword.style.display = 'block';
                                     } else {
                                         otherPlayerSword.style.display = 'none';
                                     }
+
+                                    // Show bow if they are holding it
                                     if (otherPlayer.heldItem == "bow") {
                                         otherPlayerBow.style.display = 'block';
                                     } else {
@@ -941,16 +897,12 @@
                                     otherPlayerHealth.style.width = otherPlayer.health + "%";
                                     otherPlayerDiv.style.transform = `translate(-50%, -50%) rotate(${otherPlayer.angle}deg)`;
                                     otherPlayerUsername.textContent = otherPlayer.username;
-                                    otherPlayerUsername.style.left = 
-                                        worldX + otherPlayer.x + otherPlayerDiv.offsetWidth / 2 
-                                        - otherPlayerUsername.offsetWidth / 2 - 25 + "px";
+                                    otherPlayerUsername.style.left = worldX + otherPlayer.x + otherPlayerDiv.offsetWidth / 2 - otherPlayerUsername.offsetWidth / 2 - 25 + "px";
                                     otherPlayerUsername.style.top = worldY + otherPlayer.y - 75 + "px";
-                                    otherPlayerHealthBack.style.left = 
-                                        worldX + otherPlayer.x + otherPlayerDiv.offsetWidth / 2 - 75 + "px";
+                                    otherPlayerHealthBack.style.left = worldX + otherPlayer.x + otherPlayerDiv.offsetWidth / 2 - 75 + "px";
                                     otherPlayerHealthBack.style.top = worldY + otherPlayer.y + 40 + "px";
                                     otherPlayerDiv.style.backgroundColor = otherPlayer.color;
 
-                                    // Adjust sword
                                     otherPlayerSword.style.left = "45px";
                                     otherPlayerSword.style.top = "-30px";
 
@@ -960,11 +912,9 @@
                                         blocks.forEach(block => {
                                             let swordRect = otherPlayerSword.getBoundingClientRect();
                                             let blockRect = block.getBoundingClientRect();
-                                            if (swordRect.left < blockRect.right && swordRect.right > blockRect.left &&
-                                                swordRect.top < blockRect.bottom && swordRect.bottom > blockRect.top) {
+                                            if (swordRect.left < blockRect.right && swordRect.right > blockRect.left && swordRect.top < blockRect.bottom && swordRect.bottom > blockRect.top) {
                                                 block.remove();
                                                 blocks = blocks.filter(b => b !== block);
-                                                remove(ref(database, "blocks/" + block.dataset.id));
                                             }
                                         });
                                     } else {
@@ -983,7 +933,7 @@
                                         otherPlayerDiv.style.height = otherPlayer.ySize;
                                     }
 
-                                    // If the other player's sword hits local player
+                                    // Check if other player's sword hits local player
                                     const playerRect = player.getBoundingClientRect();
                                     if (otherPlayerSword && otherPlayerSword.style.display == 'block') {
                                         const otherPlayerSwordRect = otherPlayerSword.getBoundingClientRect();
@@ -1011,6 +961,7 @@
                             }
                         }
                     });
+
                 onChildRemoved(playerRef, (snapshot) => {
                     const playerId = snapshot.key;
                     const otherPlayerDiv = document.getElementById(playerId);
@@ -1028,7 +979,8 @@
                 document.getElementById("playerList").innerHTML = "";
                 get(playerRefA).then((snapshot) => {
                     if (snapshot.exists()) {
-                        let players = snapshot.val();
+                        let p = "";
+                        const players = snapshot.val();
                         for (let key in players) {
                             const otherPlayer = players[key];
                             let newText = document.createElement("p");
@@ -1056,6 +1008,7 @@
                     let clickedElement = document.elementFromPoint(event.clientX, event.clientY);
                     if (!clickedElement) return;
 
+                    // Avoid placing on the player, wall, or an existing block
                     if (clickedElement.id == "player" || clickedElement.id == "wall" || clickedElement.id == "block") {
                         return;
                     }
@@ -1073,11 +1026,12 @@
                     }, blockCooldown);
                 }
 
-                // Using sword with mouse click
+                // Using sword (click) if slot 3
                 if (currentSlot == 3 && canUseSword && document.activeElement !== input) {
                     swordAttack();
                 }
-                // Using bow with mouse click
+
+                // Using bow (click) if slot 4
                 if (currentSlot == 4 && canShootBow && document.activeElement !== input) {
                     shootArrow();
                 }
@@ -1088,42 +1042,76 @@
                 objectText.textContent = "total objects: " + blockElements.length;
             }
 
-            // Clicking on shape icons to switch `currentObject`
-            document.getElementById("sSquare").addEventListener("click", () => {
-                currentObject = "cube";
-                document.getElementById("sSquare").style.backgroundColor = "blue";
-                document.getElementById("sRect").style.backgroundColor = "white";
-                document.getElementById("sCircle").style.backgroundColor = "white";
-                document.getElementById("sSign").style.backgroundColor = "white";
-                hoverElement.style.width = "50px";
-                hoverElement.style.borderRadius = "0%";
+            // Color picker logic
+            const colorPicker = document.getElementById("colorPicker");
+            const colorSections = document.querySelectorAll(".color-section");
+            player.addEventListener("click", (event) => {
+                // Only show color picker if clicking on the player's sprite 
+                // (and not placing a block, etc.)
+                if (currentSlot != 2 && currentSlot != 3 && currentSlot != 4 && currentSlot != 5) {
+                    const rect = player.getBoundingClientRect();
+                    const x = rect.left + rect.width / 2;
+                    const y = rect.top + rect.height / 2;
+                    colorPicker.style.left = `${x - 100}px`;
+                    colorPicker.style.top = `${y - 100}px`;
+                    colorPicker.style.display = "flex";
+                    colorSections.forEach((section, index) => {
+                        section.style.opacity = 0;
+                        section.style.visibility = "hidden";
+                        setTimeout(() => {
+                            section.style.visibility = "visible";
+                            section.style.opacity = 1;
+                            section.style.transform = `translate(var(--dx), var(--dy))`;
+                        }, index * 100);
+                    });
+                }
             });
-            document.getElementById("sRect").addEventListener("click", () => {
-                currentObject = "rect";
-                document.getElementById("sSquare").style.backgroundColor = "white";
-                document.getElementById("sRect").style.backgroundColor = "blue";
-                document.getElementById("sCircle").style.backgroundColor = "white";
-                document.getElementById("sSign").style.backgroundColor = "white";
-                hoverElement.style.width = "25px";
-                hoverElement.style.borderRadius = "0%";
+            colorSections.forEach((section) => {
+                section.addEventListener("click", (event) => {
+                    const rect = player.getBoundingClientRect();
+                    const x = rect.left + rect.width / 2 - 25;
+                    const y = rect.top + rect.height / 2 - 25;
+                    const selectedColor = event.target.style.backgroundColor;
+                    section.style.transition = "transform 0.5s ease, opacity 0.5s ease";
+                    section.style.transform = `translate(0px, 0px)`;
+                    colorSections.forEach((otherSection) => {
+                        if (otherSection !== section) {
+                            otherSection.style.opacity = 0;
+                        }
+                    });
+                    setTimeout(() => {
+                        player.style.backgroundColor = selectedColor;
+                        if (selectedColor == "red") {
+                            pos.color = "rgb(255, 0, 0)";
+                        } else {
+                            pos.color = selectedColor;
+                        }
+                        if (selectedColor == "gray") {
+                            // random color
+                            let randomColor =  "#" + ((1 << 24) + (Math.floor(Math.random() * 256) << 16) + (Math.floor(Math.random() * 256) << 8) + Math.floor(Math.random() * 256)).toString(16).slice(1);
+                            pos.color = randomColor;
+                            player.style.backgroundColor = randomColor;
+                        }
+                        colorPicker.style.display = "none";
+                        colorSections.forEach((otherSection) => {
+                            otherSection.style.transform = "translate(0, 0)";
+                            otherSection.style.opacity = 1;
+                            otherSection.style.visibility = "hidden";
+                        });
+                    }, 500);
+                });
             });
-            document.getElementById("sCircle").addEventListener("click", () => {
-                currentObject = "circle";
-                document.getElementById("sSquare").style.backgroundColor = "white";
-                document.getElementById("sRect").style.backgroundColor = "white";
-                document.getElementById("sCircle").style.backgroundColor = "blue";
-                document.getElementById("sSign").style.backgroundColor = "white";
-                hoverElement.style.width = "50px";
-                hoverElement.style.borderRadius = "50%";
-            });
-            document.getElementById("sSign").addEventListener("click", () => {
-                currentObject = "sign";
-                document.getElementById("sSquare").style.backgroundColor = "white";
-                document.getElementById("sRect").style.backgroundColor = "white";
-                document.getElementById("sCircle").style.backgroundColor = "white";
-                document.getElementById("sSign").style.backgroundColor = "blue";
-                hoverElement.style.width = "50px";
-                hoverElement.style.borderRadius = "0%";
+            document.addEventListener("click", (event) => {
+                if (!colorPicker.contains(event.target) && event.target !== player) {
+                    colorSections.forEach((section) => {
+                        section.style.transform = "translate(0, 0)";
+                        section.style.opacity = 0;
+                        section.style.visibility = "hidden";
+                    });
+                    setTimeout(() => {
+                        colorPicker.style.display = "none";
+                    }, 500);
+                }
             });
 
             function getTerrain() {
@@ -1149,7 +1137,7 @@
                             }
                         }
                     } else {
-                        // generate random terrain
+                        // create random terrain
                         for (let i = 0; i < 500; i++) {
                             push(terrainRef, {
                                 posX: Math.floor(Math.random() * 10001) - 5000,
@@ -1162,8 +1150,7 @@
             }
             function renderTerrain() {
                 for (const item of terrainList) {
-                    if (item.x + worldX >= -200 && item.x + worldX <= window.innerWidth + 200 &&
-                        item.y + worldY >= -200 && item.y + worldY <= window.innerHeight + 200 ) {
+                    if (item.x + worldX >= -200 && item.x + worldX <= window.innerWidth + 200 && item.y + worldY >= -200 && item.y + worldY <= window.innerHeight + 200 ) {
                         item.style.left = worldX + item.x + "px";
                         item.style.top = worldY + item.y + "px";
                         item.style.display = "block";
@@ -1176,7 +1163,7 @@
             // Kick off the "online players" updating
             setInterval(getOnlinePlayers, 100);
 
-            // Clear all players on load
+            // Clear players on load
             set(playerRefA, null);
 
             // Dashing
@@ -1189,7 +1176,6 @@
             const dashCooldownBar = document.getElementById("dashCooldownBar");
 
             document.addEventListener("keydown", (e) => {
-                // Q => dash
                 if (e.key === "q" && inGame && canDash) {
                     canDash = false; 
                     isInvincible = true; 
@@ -1230,6 +1216,8 @@
                     }, dashDuration);
                 }
             });
+
+            // Start everything after entering username
         </script>
     </body>
 </html>
