@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>online game:remastered</title>
@@ -9,13 +10,11 @@
         box-sizing: border-box;
         font-family: Arial, sans-serif;
       }
-
       html, body {
         width: 100%;
         height: 100%;
         overflow: hidden;
       }
-
       body {
         background: linear-gradient(120deg, #e0e0e0, #ffffff);
         cursor: default;
@@ -57,7 +56,7 @@
         z-index: 1000;
         position: absolute;
         right: 20px;
-        bottom: 80px; /* Moved up so message input fits below it */
+        bottom: 80px; 
         width: 300px;
         max-height: 320px;
         background-color: rgba(40, 40, 40, 0.8);
@@ -315,7 +314,7 @@
         width: 200px;
         height: 14px;
         border-radius: 7px;
-        bottom: 85px; /* Below the slots */
+        bottom: 85px; 
         left: 50%;
         transform: translateX(-50%);
       }
@@ -329,7 +328,6 @@
 
       /* SWORD & BOW */
       #sword {
-        /* Slower transition for a slower swing */
         transition: 0.2s linear;
         top: -30px;
         left: 45px;
@@ -528,7 +526,7 @@
     </div>
 
     <!-- ============================================= -->
-    <!--  JAVASCRIPT CODE (OPTIMIZED + BUGFIXES)       -->
+    <!--  JAVASCRIPT CODE (BUGFIXED)                  -->
     <!-- ============================================= -->
     <script type="module">
       // Throttle function for expensive events (e.g., mousemove)
@@ -600,6 +598,7 @@
       const blockRef   = ref(database, "blocks/");
       const terrainRef = ref(database, "terrain/");
       const arrowsRef  = ref(database, "arrows/");
+      const playerRefAll= ref(database, "players/");
 
       // ==============================
       //   Game State
@@ -607,7 +606,6 @@
       let gameVersion = 1.2;
       document.getElementById("version").textContent = "version " + gameVersion;
 
-      // We'll store all dynamic data for the local player in pos
       let pos = {
         xSize: 50,
         ySize: 50,
@@ -622,18 +620,18 @@
         deleteSword: false
       };
 
+      // Unique ID for this player
       let playerID    = Math.floor(Math.random() * 10000000000) + 1;
       let playerRef   = ref(database, "players/" + playerID);
-      let playerRefAll= ref(database, "players/");
 
       // Bow mechanics
       let canShootBow  = true;
       const bowCooldown= 1000;
       const arrowSpeed = 20;
-      const arrowDamage= 20;
+      const arrowDamage= 25;
       const arrowRange = 1000;
 
-      // Swords
+      // Sword
       let canUseSword = true;
 
       // Blocks & Terrain
@@ -642,32 +640,37 @@
 
       // Movement & game flags
       let keys        = {};
-      let bKey        = false; // toggled by 'b'
-      let rotation    = 0;     // used for block rotation
+      let bKey        = false; // toggled by 'b' => break-sword mode
+      let rotation    = 0;     
       let inGame      = false;
       let dead        = false;
       let worldX      = 0;
       let worldY      = 0;
 
+      const MOVE_SPEED  = 3;
+      const BOUND_LIMIT = 5000; // unify movement boundary
+
       // Quick slots
-      let currentSlot = 1;
-      let objectSelector = true; // toggles blockSelector display
-      let currentObject  = "cube"; // default block type
+      let currentSlot   = 1;
+      let objectSelector= true; 
+      let currentObject = "cube"; 
       // Rate-limiting for sending position updates
-      let sendValue      = 0;
+      let sendValue     = 0;
 
       // Dash
-      let canDash        = true;
-      let isInvincible   = false;
-      const dashDistance = 100;
-      const dashDuration = 500;
-      const dashCooldown = 2000;
+      let canDash       = true;
+      let isInvincible  = false;
+      const dashDistance= 100;
+      const dashDuration= 500;
+      const dashCooldown= 2000;
 
       // ==============================
       //   Init
       // ==============================
+      // Remove this player's data from DB on disconnect
       onDisconnect(playerRef).remove();
-      set(playerRefAll, null); // Clear players on load
+
+      // DO NOT clear all players on load (removed set(playerRefAll, null);)
 
       playerElem.style.left = pos.x + "px";
       playerElem.style.top  = pos.y + "px";
@@ -687,7 +690,7 @@
         }
       });
 
-      // Slots highlight
+      // Highlight slots
       const slots = document.getElementsByClassName("slot");
       function updateSlotColors() {
         for (let i = 0; i < slots.length; i++) {
@@ -714,19 +717,17 @@
         if (!inputVal) return;
         pos.username = inputVal;
 
+        // Announce system join (now it stays in DB — removed "set(messageRef, null)")
         push(messageRef, {
           username: "System",
           message: pos.username + " has joined the game",
           color: pos.color
         });
-        // Clear messages after sending the join message
-        set(messageRef, null);
 
         document.getElementById("usernamePopup").style.display = "none";
         document.getElementById("main").style.display = "block";
 
         inGame = true;
-        // Start the game loop and terrain loading
         gameLoop();
         getTerrain();
         setupBlockListeners();
@@ -746,7 +747,6 @@
         if (event.key === 'b' && inGame && document.activeElement !== inputElem) {
           bKey = !bKey;
           pos.deleteSword = bKey;
-          // Immediately update so others see the break-sword
           set(playerRef, pos);
         }
         // Switch block object type UI with F
@@ -754,7 +754,7 @@
           objectSelector = !objectSelector;
           updateHoverVisuals();
         }
-        // Rotate block R
+        // Rotate block with R
         if (event.key === 'r' && inGame && document.activeElement !== inputElem && currentSlot === 2) {
           rotation += 90;
           updateHoverVisuals();
@@ -769,13 +769,13 @@
             inputElem.focus();
           } else {
             if (inputElem.value !== "") {
+              // Push the chat message (no more set(messageRef, null);)
               push(messageRef, {
                 username: pos.username,
                 message: inputElem.value,
                 color: pos.color
               });
             }
-            set(messageRef, null);
             inputElem.value = "";
             inputElem.blur();
           }
@@ -798,11 +798,11 @@
           handleDash();
         }
       }
-
       function handleKeyUp(event) {
         delete keys[event.key];
       }
 
+      // Mousemove: rotate player + move hover
       const handleMouseMove = throttle((event) => {
         if (objectSelector) {
           hoverElement.style.left = 
@@ -818,10 +818,10 @@
         let angle = Math.atan2(mouseY - playerCenterY, mouseX - playerCenterX);
         pos.angle = (angle * 180 / Math.PI) | 0;
         playerElem.style.transform = `translate(-50%, -50%) rotate(${pos.angle}deg)`;
-      }, 16); // ~60FPS
+      }, 16);
       document.addEventListener("mousemove", handleMouseMove);
 
-      // Handle clicks for block placement, sword, bow
+      // Click => place block / sword / bow
       let canPlaceBlock = true;
       const blockCooldown = 125;
       document.addEventListener("click", (event) => {
@@ -837,11 +837,7 @@
           if (!clickedElem) return;
 
           // Avoid placing on player, wall, or existing block
-          if (
-            clickedElem.id === "player" ||
-            clickedElem.id === "wall"   ||
-            clickedElem.id === "block"
-          ) {
+          if (clickedElem.id === "player" || clickedElem.id === "wall" || clickedElem.className === "block") {
             return;
           }
           const color = (pos.color === "red") ? "blue" : pos.color; 
@@ -869,21 +865,17 @@
       // ==============================
       //   Functions
       // ==============================
-
       function swordAttack() {
         // Sword swings forward
         swordElem.style.transform = "rotate(0deg)";
         pos.clicked = true;
         canUseSword = false;
-        // Immediately update so other players see "clicked = true"
-        set(playerRef, pos);
+        set(playerRef, pos); // so others see you attacking
 
-        // Keep the sword in the "attack position" for 400ms
+        // Return sword after 200ms
         setTimeout(() => {
-          // Sword swings back
           swordElem.style.transform = "rotate(90deg)";
           pos.clicked = false;
-          // Update again so they see "clicked = false"
           set(playerRef, pos);
         }, 200);
 
@@ -918,20 +910,20 @@
         isInvincible = true;
 
         if (keys["a"] || keys["ArrowLeft"]) {
-          worldX = Math.min(worldX + dashDistance,  500000);
-          pos.x  = Math.max(pos.x  - dashDistance, -500000);
+          worldX = Math.min(worldX + dashDistance, BOUND_LIMIT);
+          pos.x  = Math.max(pos.x - dashDistance, -BOUND_LIMIT);
         }
         if (keys["d"] || keys["ArrowRight"]) {
-          worldX = Math.max(worldX - dashDistance, -500000);
-          pos.x  = Math.min(pos.x  + dashDistance,  500000);
+          worldX = Math.max(worldX - dashDistance, -BOUND_LIMIT);
+          pos.x  = Math.min(pos.x + dashDistance,  BOUND_LIMIT);
         }
         if (keys["w"] || keys["ArrowUp"]) {
-          worldY = Math.min(worldY + dashDistance,  500000);
-          pos.y  = Math.max(pos.y  - dashDistance, -500000);
+          worldY = Math.min(worldY + dashDistance, BOUND_LIMIT);
+          pos.y  = Math.max(pos.y - dashDistance, -BOUND_LIMIT);
         }
         if (keys["s"] || keys["ArrowDown"]) {
-          worldY = Math.max(worldY - dashDistance, -500000);
-          pos.y  = Math.min(pos.y  + dashDistance,  500000);
+          worldY = Math.max(worldY - dashDistance, -BOUND_LIMIT);
+          pos.y  = Math.min(pos.y + dashDistance,  BOUND_LIMIT);
         }
 
         dashCooldownElem.style.display = "block";
@@ -963,22 +955,23 @@
         // Movement (only if chat not focused)
         if (document.activeElement !== inputElem && !dead) {
           if (keys["a"] || keys["ArrowLeft"]) {
-            worldX = Math.min(worldX + 3,  5000);
-            pos.x  = Math.max(pos.x  - 3, -5000);
+            worldX = Math.min(worldX + MOVE_SPEED, BOUND_LIMIT);
+            pos.x  = Math.max(pos.x - MOVE_SPEED, -BOUND_LIMIT);
           }
           if (keys["d"] || keys["ArrowRight"]) {
-            worldX = Math.max(worldX - 3, -5000);
-            pos.x  = Math.min(pos.x  + 3,  5000);
+            worldX = Math.max(worldX - MOVE_SPEED, -BOUND_LIMIT);
+            pos.x  = Math.min(pos.x + MOVE_SPEED,  BOUND_LIMIT);
           }
           if (keys["w"] || keys["ArrowUp"]) {
-            worldY = Math.min(worldY + 3,  5000);
-            pos.y  = Math.max(pos.y  - 3, -5000);
+            worldY = Math.min(worldY + MOVE_SPEED, BOUND_LIMIT);
+            pos.y  = Math.max(pos.y - MOVE_SPEED, -BOUND_LIMIT);
           }
           if (keys["s"] || keys["ArrowDown"]) {
-            worldY = Math.max(worldY - 3, -5000);
-            pos.y  = Math.min(pos.y  + 3,  5000);
+            worldY = Math.max(worldY - MOVE_SPEED, -BOUND_LIMIT);
+            pos.y  = Math.min(pos.y + MOVE_SPEED,  BOUND_LIMIT);
           }
 
+          // Quick slot shortcuts
           if (keys["1"]) currentSlot = 1;
           if (keys["2"]) currentSlot = 2;
           if (keys["3"]) currentSlot = 3;
@@ -988,24 +981,19 @@
 
         // Update UI
         cordsText.textContent = "cords: " + worldX + ", " + worldY;
-        wallElem.style.left   = worldX + 500 + "px";
-        wallElem.style.top    = worldY + 500 + "px";
+        wallElem.style.left   = (worldX + 500) + "px";
+        wallElem.style.top    = (worldY + 500) + "px";
         hoverChildElem.style.display = hoverElement.style.display;
         hoverChildElem.style.left    = hoverElement.style.left;
         hoverChildElem.style.top     = hoverElement.style.top;
         healthBarElem.style.width    = pos.health + "%";
 
-        // Toggle blockSelector
         document.getElementById("blockSelector").style.display = objectSelector ? "none" : "block";
 
-        // Show / hide hover element for create slot
-        if (currentSlot === 2) {
-          hoverElement.style.display = "block";
-        } else {
-          hoverElement.style.display = "none";
-        }
+        // Hover element for the create slot
+        hoverElement.style.display = (currentSlot === 2) ? "block" : "none";
 
-        // Show sword/bow (slots)
+        // Sword / Bow
         if (currentSlot === 3) {
           swordElem.style.display = "block";
           bowElem.style.display   = "none";
@@ -1015,43 +1003,41 @@
           bowElem.style.display   = "block";
           pos.heldItem = "bow";
         } else {
-          if (currentSlot !== 3) swordElem.style.display = "none";
-          if (currentSlot !== 4) bowElem.style.display   = "none";
+          swordElem.style.display = "none";
+          bowElem.style.display   = "none";
           pos.heldItem = "none";
         }
 
-        // Toggle sword color if bKey (break-sword mode)
+        // Break-sword color
         swordElem.style.backgroundColor = bKey ? "red" : "black";
 
-        // Automatic healing
+        // Health regeneration (fixed else-if so we don't double heal below 50)
         if (pos.health < 50) {
           pos.health += 0.125;
-          if (pos.health > 100) pos.health = 100;
-        }
-        if (pos.health < 100) {
+          if (pos.health > 50) pos.health = 50; // clamp intermediate step
+        } 
+        else if (pos.health < 100) {
           pos.health += 0.0625;
-          if (pos.health > 100) pos.health = 100;
+        }
+        if (pos.health > 100) {
+          pos.health = 100;
         }
 
-        // Update collisions (player vs blocks)
+        // Collisions
         updatePlayerBlockCollisions();
-        // Update collisions (player vs terrain)
         updatePlayerTerrainCollisions();
 
-        // **LOCAL** break-sword collision (bugfix)
+        // Local break-sword collision
         if (pos.deleteSword) {
-          // Check local sword rectangle
           const localSwordRect = swordElem.getBoundingClientRect();
           for (let i = 0; i < blocks.length; i++) {
             const blockRect = blocks[i].getBoundingClientRect();
-            // If local sword overlaps block, remove it
             if (
               localSwordRect.left < blockRect.right &&
               localSwordRect.right > blockRect.left &&
               localSwordRect.top < blockRect.bottom &&
               localSwordRect.bottom > blockRect.top
             ) {
-              // Remove from DOM and from DB
               remove(ref(database, "blocks/" + blocks[i].dataset.id));
               blocks[i].remove();
               blocks.splice(i, 1);
@@ -1060,7 +1046,7 @@
           }
         }
 
-        // Update arrow positions / collisions
+        // Update arrow positions & collisions
         updateArrows();
 
         // Update block positions
@@ -1079,7 +1065,7 @@
         // Update terrain positions
         renderTerrain();
 
-        // Update slot colors each frame (if needed)
+        // Update slot colors each frame
         updateSlotColors();
         // Update object count
         getObjectCount();
@@ -1091,7 +1077,6 @@
         }
         sendValue++;
 
-        // Continue loop
         requestAnimationFrame(gameLoop);
       }
 
@@ -1106,8 +1091,8 @@
             playerRect.bottom > blockRect.top &&
             playerRect.top < blockRect.bottom
           ) {
-            pos.x += 3;
-            worldX -= 3;
+            pos.x += MOVE_SPEED;
+            worldX -= MOVE_SPEED;
           }
           // Right (D)
           if ((keys["d"] || keys["ArrowRight"]) &&
@@ -1116,8 +1101,8 @@
             playerRect.bottom > blockRect.top &&
             playerRect.top < blockRect.bottom
           ) {
-            pos.x -= 3;
-            worldX += 3;
+            pos.x -= MOVE_SPEED;
+            worldX += MOVE_SPEED;
           }
           // Up (W)
           if ((keys["w"] || keys["ArrowUp"]) &&
@@ -1126,8 +1111,8 @@
             playerRect.right > blockRect.left &&
             playerRect.left < blockRect.right
           ) {
-            pos.y += 3;
-            worldY -= 3;
+            pos.y += MOVE_SPEED;
+            worldY -= MOVE_SPEED;
           }
           // Down (S)
           if ((keys["s"] || keys["ArrowDown"]) &&
@@ -1136,8 +1121,8 @@
             playerRect.right > blockRect.left &&
             playerRect.left < blockRect.right
           ) {
-            pos.y -= 3;
-            worldY += 3;
+            pos.y -= MOVE_SPEED;
+            worldY += MOVE_SPEED;
           }
         });
       }
@@ -1153,8 +1138,8 @@
             playerRect.bottom > blockRect.top &&
             playerRect.top < blockRect.bottom
           ) {
-            pos.x += 3;
-            worldX -= 3;
+            pos.x += MOVE_SPEED;
+            worldX -= MOVE_SPEED;
           }
           // Right (D)
           if ((keys["d"] || keys["ArrowRight"]) &&
@@ -1163,8 +1148,8 @@
             playerRect.bottom > blockRect.top &&
             playerRect.top < blockRect.bottom
           ) {
-            pos.x -= 3;
-            worldX += 3;
+            pos.x -= MOVE_SPEED;
+            worldX += MOVE_SPEED;
           }
           // Up (W)
           if ((keys["w"] || keys["ArrowUp"]) &&
@@ -1173,8 +1158,8 @@
             playerRect.right > blockRect.left &&
             playerRect.left < blockRect.right
           ) {
-            pos.y += 3;
-            worldY -= 3;
+            pos.y += MOVE_SPEED;
+            worldY -= MOVE_SPEED;
           }
           // Down (S)
           if ((keys["s"] || keys["ArrowDown"]) &&
@@ -1183,8 +1168,8 @@
             playerRect.right > blockRect.left &&
             playerRect.left < blockRect.right
           ) {
-            pos.y -= 3;
-            worldY += 3;
+            pos.y -= MOVE_SPEED;
+            worldY += MOVE_SPEED;
           }
         });
       }
@@ -1204,13 +1189,12 @@
             removeArrowFromDB(arrowEl.dataset.id);
             continue;
           }
-
           arrowEl.style.left = (worldX + arrowEl.x) + "px";
           arrowEl.style.top  = (worldY + arrowEl.y) + "px";
 
           const arrowRect = arrowEl.getBoundingClientRect();
 
-          // 1) Check collision with blocks
+          // Collision with blocks
           for (let j = 0; j < blocks.length; j++) {
             const blockRect = blocks[j].getBoundingClientRect();
             if (
@@ -1228,7 +1212,21 @@
             }
           }
 
-          // 2) Check collision with local player
+          // Collision with terrain
+          for (let j = 0; j < terrainList.length; j++) {
+            const terrainRect = terrainList[j].getBoundingClientRect();
+            if (
+              arrowRect.left < terrainRect.right &&
+              arrowRect.right > terrainRect.left &&
+              arrowRect.top < terrainRect.bottom &&
+              arrowRect.bottom > terrainRect.top
+            ) {
+              removeArrowFromDB(arrowEl.dataset.id);
+              break;
+            }
+          }
+
+          // Collision with local player
           const playerRect = playerElem.getBoundingClientRect();
           if (
             arrowRect.left < playerRect.right &&
@@ -1246,7 +1244,7 @@
             continue; 
           }
 
-          // 3) Check collision with other players
+          // Collision with other players
           const otherPlayers = document.getElementsByClassName("otherPlayer");
           for (let k = 0; k < otherPlayers.length; k++) {
             const op = otherPlayers[k];
@@ -1297,9 +1295,11 @@
       // Messages
       onChildAdded(messageRef, (snapshot) => {
         const message = snapshot.val();
+        if (!message) return;
         let messageElement;
+
+        // If message contains "***", enlarge it
         if (message.message && message.message.includes("***")) {
-          // Big font
           message.message = message.message.replace("***", "");
           messageElement  = document.createElement("h1");
         } else {
@@ -1313,6 +1313,7 @@
           messageElement.style.fontStyle = "italic";
           messageElement.style.color     = "gray";
         }
+
         // handle /playsound
         if (message.message && message.message.includes("/playsound")) {
           let [cmd, sound] = message.message.split(" ");
@@ -1326,19 +1327,21 @@
           set(blockRef, null);
           blocks.forEach((block) => block.remove());
           blocks = [];
+          // Provide a system message about clearing
           push(messageRef, {
             username: "System",
-            message: pos.username + " has cleared the blocks",
-            color: pos.color
+            message: (message.username + " has cleared the blocks"),
+            color: message.color
           });
           return;
         }
+
         messageElement.textContent = message.username + ": " + message.message;
         chatArea.appendChild(messageElement);
         chatArea.scrollTop = chatArea.scrollHeight;
       });
 
-      // Players (onValue => auto-updates)
+      // Players
       onValue(playerRefAll, (snapshot) => {
         if (!snapshot.exists()) return;
         const allPlayers = snapshot.val() || {};
@@ -1351,12 +1354,12 @@
         onlineText.textContent = "online players: " + totalPlayers;
         document.getElementById("onlinePlayers").textContent = "online players: " + totalPlayers;
 
-        // Generate elements or update for each
+        // Generate/Update each
         for (let key in allPlayers) {
           const otherPlayer = allPlayers[key];
           if (!otherPlayer) continue;
 
-          // Add to side panel
+          // Side panel
           let newText = document.createElement("p");
           newText.textContent = otherPlayer.username;
           newText.style.textAlign = "center";
@@ -1366,13 +1369,13 @@
           }
           playerListElem.appendChild(newText);
 
-          // If it's not me, update or create other player
+          // If not me, draw / update other player
           if (parseInt(key) !== playerID) {
             updateOtherPlayer(key, otherPlayer);
           }
         }
 
-        // Remove any local DOM player that doesn't exist in DB
+        // Remove DOM players that are no longer in DB
         let existingPlayers = document.getElementsByClassName("otherPlayer");
         for (let i = existingPlayers.length - 1; i >= 0; i--) {
           let e = existingPlayers[i];
@@ -1392,39 +1395,40 @@
       function setupBlockListeners() {
         onChildAdded(blockRef, (snapshot) => {
           const blockData = snapshot.val();
-          let newBlock = document.createElement("div");
+          if (!blockData) return;
 
-          // Basic styling
-          newBlock.style.height = "50px";
+          let newBlock = document.createElement("div");
+          // Use a unique ID
+          newBlock.id         = "block-" + snapshot.key;
+          newBlock.dataset.id = snapshot.key;
+          newBlock.classList.add("block");
+
+          newBlock.style.position = "absolute";
+          newBlock.style.zIndex   = -1000;
+          newBlock.style.backgroundColor = blockData.color;
+          newBlock.style.transform      = "rotate(" + blockData.rotation + "deg)";
+
+          // Basic size
           if (blockData.kind === "rect") {
-            newBlock.style.width = "25px";
+            newBlock.style.width  = "25px";
+            newBlock.style.height = "50px";
           } else {
-            newBlock.style.width = "50px";
+            newBlock.style.width  = "50px";
+            newBlock.style.height = "50px";
           }
           if (blockData.kind === "circle") {
             newBlock.style.borderRadius = "50%";
           }
-          newBlock.id                = "block";
-          newBlock.dataset.id        = snapshot.key;
-          newBlock.classList.add("block");
-          newBlock.style.backgroundColor = blockData.color;
-          newBlock.style.position    = "absolute";
-          newBlock.style.zIndex      = -1000;
-          newBlock.style.transform   = "rotate(" + blockData.rotation + "deg)";
-
-          if (blockData.kind === "rect") {
-            newBlock.x = blockData.x + 12.5;
-          } else {
-            newBlock.x = blockData.x;
-          }
-          newBlock.y = blockData.y;
-
           if (blockData.kind === "sign") {
             newBlock.textContent    = "sign";
             newBlock.contentEditable= true;
+            // Force no rotation so text is easier to read
             newBlock.style.transform= "rotate(0deg)";
           }
 
+          // For simpler tracking
+          newBlock.x = blockData.x;
+          newBlock.y = blockData.y;
           newBlock.style.left = (worldX + newBlock.x) + "px";
           newBlock.style.top  = (worldY + newBlock.y) + "px";
 
@@ -1437,6 +1441,8 @@
       function setupArrowListeners() {
         onChildAdded(arrowsRef, (snapshot) => {
           const arrowData = snapshot.val();
+          if (!arrowData) return;
+
           let arrowDiv    = document.createElement("div");
           arrowDiv.classList.add("arrow");
           arrowDiv.style.position = "absolute";
@@ -1535,8 +1541,8 @@
         otherPlayerBow.style.display   = (otherPlayer.heldItem === "bow")   ? "block" : "none";
 
         // Position
-        otherPlayerDiv.style.left = (worldX + otherPlayer.x) + "px";
-        otherPlayerDiv.style.top  = (worldY + otherPlayer.y) + "px";
+        otherPlayerDiv.style.left   = (worldX + otherPlayer.x) + "px";
+        otherPlayerDiv.style.top    = (worldY + otherPlayer.y) + "px";
         otherPlayerHealth.style.width = otherPlayer.health + "%";
         otherPlayerDiv.style.transform  = `translate(-50%, -50%) rotate(${otherPlayer.angle}deg)`;
         otherPlayerUsername.textContent = otherPlayer.username;
@@ -1548,11 +1554,11 @@
         otherPlayerHealthBack.style.top = (worldY + otherPlayer.y + 40) + "px";
         otherPlayerDiv.style.backgroundColor = otherPlayer.color;
 
-        // Sword
+        // Sword position
         otherPlayerSword.style.left = "45px";
         otherPlayerSword.style.top  = "-30px";
 
-        // If they're in destroy mode
+        // Break-sword mode
         if (otherPlayer.deleteSword === true) {
           otherPlayerSword.style.backgroundColor = "red";
           // Collisions for blocks with this remote player's sword
@@ -1565,7 +1571,6 @@
               swordRect.top < blockRect.bottom &&
               swordRect.bottom > blockRect.top
             ) {
-              // Remove block
               remove(ref(database, "blocks/" + blocks[i].dataset.id));
               blocks[i].remove();
               blocks.splice(i, 1);
@@ -1580,12 +1585,13 @@
         if (otherPlayer.clicked === true) {
           // Make the sword face forward
           otherPlayerSword.style.transform = "rotate(0deg)";
+          // Return it after ~200ms
           setTimeout(() => {
             otherPlayerSword.style.transform = "rotate(90deg)";
-          }, 100);
+          }, 200);
         }
 
-        // Force them to 50px if needed
+        // Force 50x50
         otherPlayerDiv.style.width  = "50px";
         otherPlayerDiv.style.height = "50px";
 
@@ -1711,7 +1717,7 @@
               }
             }
           } else {
-            // create random terrain
+            // Create random terrain if none in DB
             for (let i = 0; i < 500; i++) {
               push(terrainRef, {
                 posX: Math.floor(Math.random() * 10001) - 5000,
